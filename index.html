@@ -1,33 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Mira Frontend</title>
+  <meta charset="UTF-8" />
+  <title>Mira ChatGPT UI</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 40px;
+      font-family: Arial, sans-serif;
       background: #f5f5f5;
-      color: #333;
-    }
-    header {
-      background-color: #004b8d;
       padding: 20px;
-      color: white;
-      text-align: center;
     }
-    main {
-      margin-top: 20px;
+    h1 {
+      text-align: center;
+      color: #004b8d;
+    }
+    .chat-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .chat-log {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #fafafa;
+    }
+    .user-input {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    select, input, button {
+      padding: 10px;
+      font-size: 1em;
+    }
+    select {
+      width: 150px;
+    }
+    input {
+      flex: 1;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Welcome to Mira</h1>
-    <p>Your custom AI assistant frontend</p>
-  </header>
-  <main>
-    <p>This page is deployed from GitHub to Azure Static Web Apps.</p>
-  </main>
+  <h1>Mira Chat</h1>
+  <div class="chat-container">
+    <div class="chat-log" id="chatLog">
+      <div><strong>Mira:</strong> Hello, how can I help you today?</div>
+    </div>
+
+    <div class="user-input">
+      <select id="dataSource">
+        <option value="internet">Internet</option>
+        <option value="company">Company</option>
+      </select>
+      <input type="text" id="userInput" placeholder="Ask a question..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      const log = document.getElementById('chatLog');
+      const source = document.getElementById('dataSource').value;
+
+      if (!input.value.trim()) return;
+
+      const userMsg = `<div><strong>You:</strong> ${input.value}</div>`;
+      const systemMsg = `<div><strong>Mira:</strong> [thinking using <em>${source}</em> data...]</div>`;
+
+      log.innerHTML += userMsg + systemMsg;
+      input.value = '';
+      log.scrollTop = log.scrollHeight;
+    }
+  </script>
 </body>
 </html>
