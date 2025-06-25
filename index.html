@@ -48,7 +48,6 @@
     .main {
       flex: 1;
       display: flex;
-      height: 100%;
       overflow: hidden;
     }
 
@@ -82,80 +81,106 @@
 
     .chat-area {
       flex: 1;
-      padding: 20px;
       display: flex;
       flex-direction: column;
+      position: relative;
+      padding-bottom: 80px; /* space for input box */
     }
 
     .chat-log {
       flex: 1;
       overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #fafafa;
-      border-radius: 6px;
+      border: none;
+      padding: 20px;
+      display: none;
     }
 
-    .user-input {
+    .chat-log.visible {
+      display: block;
+    }
+
+    .prompt-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+      text-align: center;
+    }
+
+    .prompt-btn {
+      background: #e8f0fe;
+      border: 1px solid #b0c4de;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .prompt-btn:hover {
+      background: #d0e4ff;
+    }
+
+    .chat-input {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 15px 20px;
+      background: white;
+      border-top: 1px solid #ddd;
       display: flex;
       gap: 10px;
-      margin-bottom: 10px;
     }
 
-    input[type="text"] {
+    .chat-input input {
       flex: 1;
       padding: 10px;
       font-size: 1em;
       font-family: 'Inter', sans-serif;
     }
 
-    button {
+    .chat-input button {
       padding: 10px 14px;
       font-size: 1em;
-      cursor: pointer;
       border: none;
       border-radius: 4px;
       background-color: #004b8d;
       color: white;
       font-family: 'Inter', sans-serif;
+      cursor: pointer;
     }
 
     .controls {
+      position: absolute;
+      top: 10px;
+      right: 20px;
       display: flex;
-      justify-content: space-between;
+      gap: 10px;
     }
 
     .controls button {
       background-color: #666;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 0.9em;
+      font-family: 'Inter', sans-serif;
     }
 
     .toggle-sidebar {
+      position: absolute;
+      top: 10px;
+      left: 20px;
       background-color: #004b8d;
-    }
-
-    /* Prompt Bubbles */
-    .prompts {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .prompt-btn {
-      flex: 1;
-      background: #e8f0fe;
-      border: 1px solid #b0c4de;
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-      font-size: 0.95em;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    .prompt-btn:hover {
-      background: #d0e4ff;
     }
   </style>
 </head>
@@ -164,7 +189,7 @@
   <!-- Header -->
   <div class="top-bar">
     <div class="top-left">
-      <img src="bhclogo.png" alt="BHC Logo">
+      <img src="BHCLogo.png" alt="BHC Logo">
       <h1>Mira GPT</h1>
     </div>
     <div class="top-right">
@@ -185,28 +210,26 @@
       <div class="history-item">Explain ISO 9001</div>
     </div>
 
-    <!-- Chat Section -->
+    <!-- Chat Area -->
     <div class="chat-area">
       <div class="controls">
-        <button class="toggle-sidebar" onclick="toggleSidebar()">☰</button>
-        <div>
-          <button onclick="newChat()">New Chat</button>
-          <button onclick="clearChat()">Clear</button>
-        </div>
+        <button onclick="newChat()">New Chat</button>
+        <button onclick="clearChat()">Clear</button>
       </div>
+      <button class="toggle-sidebar" onclick="toggleSidebar()">☰</button>
 
-      <!-- Prompt Suggestions -->
-      <div class="prompts" id="promptBox">
+      <!-- Prompt Center -->
+      <div class="prompt-box" id="promptBox">
         <div class="prompt-btn" onclick="usePrompt('How do I submit a timesheet?')">How do I submit a timesheet?</div>
         <div class="prompt-btn" onclick="usePrompt('Summarise the latest ISO audit')">Summarise the latest ISO audit</div>
         <div class="prompt-btn" onclick="usePrompt('Search for welding procedures')">Search for welding procedures</div>
       </div>
 
-      <div class="chat-log" id="chatLog">
-        <div><strong>Mira:</strong> Hello, how can I help you today?</div>
-      </div>
+      <!-- Chat Log -->
+      <div class="chat-log" id="chatLog"></div>
 
-      <div class="user-input">
+      <!-- Input -->
+      <div class="chat-input">
         <input type="text" id="userInput" placeholder="Ask a question..." />
         <button onclick="sendMessage()">Send</button>
       </div>
@@ -230,7 +253,8 @@
       input.value = '';
       chatLog.scrollTop = chatLog.scrollHeight;
 
-      promptBox.style.display = 'none'; // hide prompts after first message
+      promptBox.style.display = 'none';
+      chatLog.classList.add('visible');
     }
 
     function usePrompt(text) {
@@ -239,7 +263,8 @@
     }
 
     function clearChat() {
-      chatLog.innerHTML = '<div><strong>Mira:</strong> Hello, how can I help you today?</div>';
+      chatLog.innerHTML = '';
+      chatLog.classList.remove('visible');
       promptBox.style.display = 'flex';
     }
 
@@ -252,13 +277,9 @@
       sidebar.classList.toggle('hidden');
     }
 
-    // On load, if chat is empty, show prompts
     window.onload = () => {
-      if (chatLog.children.length <= 1) {
-        promptBox.style.display = 'flex';
-      } else {
-        promptBox.style.display = 'none';
-      }
+      chatLog.classList.remove('visible');
+      promptBox.style.display = 'flex';
     };
   </script>
 
