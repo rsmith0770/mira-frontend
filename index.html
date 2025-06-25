@@ -42,14 +42,86 @@
     .top-right select {
       padding: 8px;
       font-size: 1em;
-      font-family: 'Inter', sans-serif;
     }
 
     .main {
       flex: 1;
       display: flex;
       overflow: hidden;
-      justify-content: center;
+    }
+
+    .chat-wrapper {
+      flex: 1;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      padding-bottom: 80px;
+    }
+
+    .chat-log {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .chat-log.visible {
+      display: block;
+    }
+
+    .prompt-box {
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: flex-start;
+    }
+
+    .prompt-btn {
+      background: #e8f0fe;
+      border: 1px solid #b0c4de;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      max-width: 400px;
+    }
+
+    .prompt-btn:hover {
+      background: #d0e4ff;
+    }
+
+    .chat-input {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 200px; /* reserve space for history sidebar */
+      padding: 15px 20px;
+      background: white;
+      border-top: 1px solid #ddd;
+      display: flex;
+      gap: 10px;
+      max-width: 900px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      font-size: 1em;
+    }
+
+    .chat-input button {
+      padding: 10px 14px;
+      font-size: 1em;
+      border: none;
+      border-radius: 4px;
+      background-color: #004b8d;
+      color: white;
+      cursor: pointer;
     }
 
     .sidebar {
@@ -57,13 +129,7 @@
       background-color: #e0e0e0;
       padding: 15px;
       overflow-y: auto;
-      transition: width 0.3s ease;
-    }
-
-    .sidebar.hidden {
-      width: 0;
-      padding: 0;
-      overflow: hidden;
+      border-left: 1px solid #ccc;
     }
 
     .sidebar h3 {
@@ -80,94 +146,10 @@
       cursor: pointer;
     }
 
-    .chat-wrapper {
-      flex: 1;
-      max-width: 720px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      padding-bottom: 80px;
-      width: 100%;
-    }
-
-    .chat-log {
-      flex: 1;
-      overflow-y: auto;
-      border: none;
-      padding: 20px;
-      display: none;
-    }
-
-    .chat-log.visible {
-      display: block;
-    }
-
-    .prompt-box {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      align-items: center;
-      text-align: center;
-    }
-
-    .prompt-btn {
-      background: #e8f0fe;
-      border: 1px solid #b0c4de;
-      border-radius: 8px;
-      padding: 12px 24px;
-      font-size: 1em;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .prompt-btn:hover {
-      background: #d0e4ff;
-    }
-
-    .chat-input {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 15px 20px;
-      background: white;
-      border-top: 1px solid #ddd;
-      display: flex;
-      gap: 10px;
-      max-width: 720px;
-      margin: 0 auto;
-    }
-
-    .chat-input input {
-      flex: 1;
-      padding: 10px;
-      font-size: 1em;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .chat-input button {
-      padding: 10px 14px;
-      font-size: 1em;
-      border: none;
-      border-radius: 4px;
-      background-color: #004b8d;
-      color: white;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-    }
-
     .controls {
-      position: absolute;
-      top: 10px;
-      right: 20px;
       display: flex;
       gap: 10px;
+      margin-bottom: 10px;
     }
 
     .controls button {
@@ -178,20 +160,11 @@
       padding: 6px 10px;
       cursor: pointer;
       font-size: 0.9em;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .toggle-sidebar {
-      position: absolute;
-      top: 10px;
-      left: 20px;
-      background-color: #004b8d;
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
   <div class="top-bar">
     <div class="top-left">
       <img src="bhclogo.png" alt="BHC Logo">
@@ -205,39 +178,35 @@
     </div>
   </div>
 
-  <!-- Main Body -->
   <div class="main">
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-      <h3>Chat History</h3>
-      <div class="history-item">How do I reset my password?</div>
-      <div class="history-item">Where’s the latest timesheet?</div>
-      <div class="history-item">Explain ISO 9001</div>
-    </div>
-
-    <!-- Chat Column -->
+    <!-- Left Chat Panel -->
     <div class="chat-wrapper">
       <div class="controls">
         <button onclick="newChat()">New Chat</button>
         <button onclick="clearChat()">Clear</button>
       </div>
-      <button class="toggle-sidebar" onclick="toggleSidebar()">☰</button>
 
-      <!-- Prompt Center -->
+      <!-- Prompt Suggestions -->
       <div class="prompt-box" id="promptBox">
         <div class="prompt-btn" onclick="usePrompt('How do I submit a timesheet?')">How do I submit a timesheet?</div>
         <div class="prompt-btn" onclick="usePrompt('Summarise the latest ISO audit')">Summarise the latest ISO audit</div>
         <div class="prompt-btn" onclick="usePrompt('Search for welding procedures')">Search for welding procedures</div>
       </div>
 
-      <!-- Chat Log -->
       <div class="chat-log" id="chatLog"></div>
 
-      <!-- Input -->
       <div class="chat-input">
         <input type="text" id="userInput" placeholder="Ask a question..." />
         <button onclick="sendMessage()">Send</button>
       </div>
+    </div>
+
+    <!-- Right Sidebar History -->
+    <div class="sidebar" id="sidebar">
+      <h3>Chat History</h3>
+      <div class="history-item">How do I reset my password?</div>
+      <div class="history-item">Where’s the latest timesheet?</div>
+      <div class="history-item">Explain ISO 9001</div>
     </div>
   </div>
 
@@ -248,16 +217,13 @@
     function sendMessage() {
       const input = document.getElementById('userInput');
       const source = document.getElementById('dataSource').value;
-
       if (!input.value.trim()) return;
 
       const userMsg = `<div><strong>You:</strong> ${input.value}</div>`;
       const systemMsg = `<div><strong>Mira:</strong> [thinking using <em>${source}</em> data...]</div>`;
-
       chatLog.innerHTML += userMsg + systemMsg;
       input.value = '';
       chatLog.scrollTop = chatLog.scrollHeight;
-
       promptBox.style.display = 'none';
       chatLog.classList.add('visible');
     }
@@ -275,11 +241,6 @@
 
     function newChat() {
       clearChat();
-    }
-
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('hidden');
     }
 
     window.onload = () => {
