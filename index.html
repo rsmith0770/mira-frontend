@@ -42,6 +42,9 @@
       font-size: 1em;
       border: none;
       border-radius: 4px;
+      background: white;
+      color: #333;
+      cursor: pointer;
     }
 
     .main {
@@ -63,12 +66,17 @@
     }
 
     .chat-log {
+      display: none;
       flex: 1;
       overflow-y: auto;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
       gap: 14px;
+      flex-direction: column;
+      display: flex;
+    }
+
+    .chat-log.visible {
+      display: flex;
     }
 
     .prompt-box {
@@ -118,8 +126,7 @@
       align-items: flex-end;
       width: 100%;
       max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
+      margin: 0 auto;
       margin-top: auto;
       padding: 20px;
       background: transparent;
@@ -207,6 +214,9 @@
       <h1>BHC Private GPT</h1>
     </div>
     <div class="top-right">
+      <button id="historyBtn" onclick="toggleHistory()" title="Chat History">
+        <i class="fas fa-history"></i>
+      </button>
       <select id="dataSource">
         <option value="internet">Internet</option>
         <option value="company">Company</option>
@@ -236,8 +246,9 @@
   </div>
 
   <script>
-    const chatLog = document.getElementById('chatLog');
+    const chatLog   = document.getElementById('chatLog');
     const promptBox = document.getElementById('promptBox');
+    const input     = document.getElementById('userInput');
     const promptList = [
       "How do I submit a timesheet?",
       "Summarise the latest ISO audit",
@@ -246,11 +257,19 @@
       "List upcoming site visits"
     ];
 
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    function toggleHistory() {
+      const show = chatLog.classList.toggle('visible');
+      promptBox.style.display = show ? 'none' : 'flex';
+    }
+
     function generatePrompts() {
       const used = new Set();
       const row = document.getElementById('promptRow');
       row.innerHTML = '';
-
       while (used.size < 3) {
         const random = promptList[Math.floor(Math.random() * promptList.length)];
         if (!used.has(random)) {
@@ -265,7 +284,7 @@
     }
 
     function usePrompt(text) {
-      document.getElementById('userInput').value = text;
+      input.value = text;
       sendMessage();
     }
 
@@ -281,23 +300,18 @@
     }
 
     function sendMessage() {
-      const input = document.getElementById('userInput');
+      const text = input.value.trim();
+      if (!text) return;
+
       const source = document.getElementById('dataSource').value;
+      let systemMessage = source === 'company'
+        ? "You are a professional and friendly AI assistant called Mira working for BHC.  ### Answer Logic ### Company Data: - Use Azure AI Search to find answers in BHC’s documents, firstly relating to BHC. - Summarize relevant documents clearly using your own words. - When possible, present answers as:   - Numbered steps (for processes)   - Bullet points (for key facts or lists)   - Tables (if comparing data or showing multiple results) - When a question references “users,” “staff,” “employees,” or similar terms, prioritise documents that explicitly mention “BHC” or its context over generic sources. - Assume that the user is asking about internal BHC policies, guidance, or operations unless otherwise specified.  **General Knowledge:** - If the user’s question is not related to BHC, use general knowledge to answer. - Do not skip the question—even if no BHC data is found. - If unsure, respond with: **\"I'm not 100% certain, but...\"**  **Presentation Rules:** - Do **not** quote long document sections directly. - Always explain using concise, professional language. - Use lists or structure where it improves clarity. - For step-by-step tasks, return instructions as a **clean, numbered list**.  **Other Rules:** - If a question is unclear, ask for clarification. - If a table is present, read it line by line to extract and compare data. - Never return an empty response due to missing company data."
+        : "You are a helpful assistant. Only answer using general knowledge. Do not reference company or internal documents.";
 
-      if (!input.value.trim()) return;
-
-      let systemMessage = '';
-      if (source === 'company') {
-        systemMessage = "You are a professional and friendly AI assistant called Mira working for BHC.  ### Answer Logic ### Company Data: - Use Azure AI Search to find answers in BHC’s documents, firstly relating to BHC. - Summarize relevant documents clearly using your own words. - When possible, present answers as:   - Numbered steps (for processes)   - Bullet points (for key facts or lists)   - Tables (if comparing data or showing multiple results) - When a question references “users,” “staff,” “employees,” or similar terms, prioritise documents that explicitly mention “BHC” or its context over generic sources. - Assume that the user is asking about internal BHC policies, guidance, or operations unless otherwise specified.  **General Knowledge:** - If the user’s question is not related to BHC, use general knowledge to answer. - Do not skip the question—even if no BHC data is found. - If unsure, respond with: **\"I'm not 100% certain, but...\"**  **Presentation Rules:** - Do **not** quote long document sections directly. - Always explain using concise, professional language. - Use lists or structure where it improves clarity. - For step-by-step tasks, return instructions as a **clean, numbered list**.  **Other Rules:** - If a question is unclear, ask for clarification. - If a table is present, read it line by line to extract and compare data. - Never return an empty response due to missing company data.";
-      } else {
-        systemMessage = "You are a helpful assistant. Only answer using general knowledge. Do not reference company or internal documents.";
-      }
-
-      const userMessage = input.value.trim();
-      const userBubble = `<div class="message user-message">You: ${userMessage}</div>`;
-      const aiBubble = `<div class="message ai-message">Mira: <em>Thinking...</em></div>`;
-
+      const userBubble = `<div class="message user-message">You: ${text}</div>`;
+      const aiBubble   = `<div class="message ai-message">Mira: <em>Thinking...</em></div>`;
       chatLog.innerHTML += userBubble + aiBubble;
+
       input.value = '';
       chatLog.scrollTop = chatLog.scrollHeight;
       promptBox.style.display = 'none';
@@ -312,7 +326,7 @@
         body: JSON.stringify({
           messages: [
             { role: "system", content: systemMessage },
-            { role: "user", content: userMessage }
+            { role: "user", content: text }
           ],
           temperature: 0.7,
           top_p: 0.95
