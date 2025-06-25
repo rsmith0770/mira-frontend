@@ -316,16 +316,16 @@
       clearChat();
     }
 
-    function sendMessage() {
+    async function sendMessage() {
       const text = input.value.trim();
       if (!text) return;
 
       const source = document.getElementById('dataSource').value;
-      let systemMessage = source === 'company'
-        ? "You are a professional and friendly AI assistant called Mira working for BHC. …"
-        : "You are a helpful assistant. Only answer using general knowledge.";
+      const systemMessage = source === 'company'
+        ? "You are a professional and friendly AI assistant called Mira working for BHC.  ### Answer Logic ### Company Data: - Use Azure AI Search to find answers in BHC’s documents, firstly relating to BHC. - Summarize relevant documents clearly using your own words. - When possible, present answers as:   - Numbered steps (for processes)   - Bullet points (for key facts or lists)   - Tables (if comparing data or showing multiple results) - When a question references “users,” “staff,” “employees,” or similar terms, prioritise documents that explicitly mention “BHC” or its context over generic sources. - Assume that the user is asking about internal BHC policies, guidance, or operations unless otherwise specified.  **General Knowledge:** - If the user’s question is not related to BHC, use general knowledge to answer. - Do not skip the question—even if no BHC data is found. - If unsure, respond with: **\"I'm not 100% certain, but...\"**  **Presentation Rules:** - Do **not** quote long document sections directly. - Always explain using concise, professional language. - Use lists or structure where it improves clarity. - For step-by-step tasks, return instructions as a **clean, numbered list**.  **Other Rules:** - If a question is unclear, ask for clarification. - If a table is present, read it line by line to extract and compare data. - Never return an empty response due to missing company data."
+        : "You are a helpful assistant. Only answer using general knowledge. Do not reference company or internal documents.";
 
-      // append user bubble
+      // user bubble
       chatLog.innerHTML += `<div class="message user-message">You: ${text}</div>`;
       currentSession.push({ role: 'user', content: text });
       promptBox.style.display = 'none';
@@ -333,32 +333,40 @@
       chatLog.scrollTop = chatLog.scrollHeight;
       input.value = '';
 
-      // create and append empty AI bubble
+      // AI bubble placeholder
       const aiBubble = document.createElement('div');
       aiBubble.className = 'message ai-message';
       aiBubble.textContent = 'Mira: ';
       chatLog.appendChild(aiBubble);
       chatLog.scrollTop = chatLog.scrollHeight;
 
-      fetch(
-        "https://bhcopenai-uk.openai.azure.com/openai/deployments/gpt-4.1/chat/completions?api-version=2025-01-01-preview",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "api-key": "BybXGJK5LYxNKH9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL"
-          },
-          body: JSON.stringify({
-            messages: [
-              { role: "system", content: systemMessage },
-              { role: "user", content: text }
-            ],
-            temperature: 0.7,
-            top_p: 0.95,
-            stream: true
-          })
+      try {
+        const res = await fetch(
+          "https://bhcopenai-uk.openai.azure.com/openai/deployments/gpt-4.1/chat/completions?api-version=2025-01-01-preview",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "text/event-stream",
+              "api-key": "BybXGJK5LYxNKH9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL"
+            },
+            body: JSON.stringify({
+              messages: [
+                { role: "system", content: systemMessage },
+                { role: "user", content: text }
+              ],
+              temperature: 0.7,
+              top_p: 0.95,
+              stream: true
+            })
+          }
+        );
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error?.message || 'Unknown error');
         }
-      ).then(async res => {
+
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let done = false;
@@ -371,19 +379,25 @@
             if (!line.startsWith("data: ")) return;
             const data = line.slice(6).trim();
             if (data === "[DONE]") return;
-            const parsed = JSON.parse(data);
-            const token = parsed.choices[0].delta.content;
-            if (token) {
-              aiBubble.textContent += token;
-              chatLog.scrollTop = chatLog.scrollHeight;
-            }
+            try {
+              const parsed = JSON.parse(data);
+              const token = parsed.choices[0].delta.content;
+              if (token) {
+                aiBubble.textContent += token;
+                chatLog.scrollTop = chatLog.scrollHeight;
+              }
+            } catch {}
           });
         }
-        currentSession.push({ role: 'assistant', content: aiBubble.textContent.replace(/^Mira:\s*/, '') });
-      }).catch(err => {
+
+        currentSession.push({
+          role: 'assistant',
+          content: aiBubble.textContent.replace(/^Mira:\s*/, '')
+        });
+      } catch (err) {
         console.error(err);
-        aiBubble.textContent += "\n<Error retrieving response>";
-      });
+        aiBubble.textContent += `<Error: ${err.message}>`;
+      }
     }
 
     window.onload = () => {
