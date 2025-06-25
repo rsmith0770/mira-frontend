@@ -18,7 +18,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background-color: #004b8d;
+      background: linear-gradient(to top, #003a6d, #0059b3);
       color: white;
       padding: 10px 20px;
     }
@@ -49,6 +49,7 @@
       flex: 1;
       display: flex;
       overflow: hidden;
+      justify-content: center;
     }
 
     .sidebar {
@@ -79,12 +80,14 @@
       cursor: pointer;
     }
 
-    .chat-area {
+    .chat-wrapper {
       flex: 1;
+      max-width: 720px;
       display: flex;
       flex-direction: column;
       position: relative;
-      padding-bottom: 80px; /* space for input box */
+      padding-bottom: 80px;
+      width: 100%;
     }
 
     .chat-log {
@@ -137,6 +140,8 @@
       border-top: 1px solid #ddd;
       display: flex;
       gap: 10px;
+      max-width: 720px;
+      margin: 0 auto;
     }
 
     .chat-input input {
@@ -189,7 +194,7 @@
   <!-- Header -->
   <div class="top-bar">
     <div class="top-left">
-      <img src="BHCLogo.png" alt="BHC Logo">
+      <img src="bhclogo.png" alt="BHC Logo">
       <h1>Mira GPT</h1>
     </div>
     <div class="top-right">
@@ -210,8 +215,8 @@
       <div class="history-item">Explain ISO 9001</div>
     </div>
 
-    <!-- Chat Area -->
-    <div class="chat-area">
+    <!-- Chat Column -->
+    <div class="chat-wrapper">
       <div class="controls">
         <button onclick="newChat()">New Chat</button>
         <button onclick="clearChat()">Clear</button>
