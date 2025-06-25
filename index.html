@@ -74,15 +74,14 @@
       display: flex;
       flex-direction: column;
       padding: 20px;
-      padding-bottom: 120px;
       box-sizing: border-box;
-      position: relative;
     }
 
     .chat-log {
       flex: 1;
       overflow-y: auto;
       padding: 10px;
+      margin-bottom: 30px;
       display: none;
     }
 
@@ -91,10 +90,7 @@
     }
 
     .prompt-box {
-      position: absolute;
-      top: 100px;
-      left: 0;
-      right: 0;
+      margin-top: 80px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -141,64 +137,70 @@
       background: #d0e4ff;
     }
 
-    .chat-input-container {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: white;
-      border-top: 1px solid #ddd;
+    .chat-input-wrapper {
       display: flex;
-      justify-content: center;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 20px;
-    }
-
-    .chat-input {
+      margin-top: 20px;
+      gap: 10px;
+      align-items: flex-end;
       width: 100%;
       max-width: 900px;
-      display: flex;
-      gap: 10px;
-      margin-bottom: 5px;
-    }
-
-    .chat-input input {
-      flex: 1;
-      padding: 10px;
-      font-size: 1em;
-    }
-
-    .chat-input button {
-      padding: 10px 14px;
-      font-size: 1em;
-      background-color: #004b8d;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .chat-actions {
-      width: 100%;
-      max-width: 900px;
       display: flex;
-      justify-content: flex-start;
+      flex-direction: column;
       gap: 10px;
     }
 
     .chat-actions button {
-      background-color: #666;
-      color: white;
+      background-color: #e0e0e0;
       border: none;
-      border-radius: 4px;
-      padding: 6px 10px;
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2em;
+      color: #333;
       cursor: pointer;
-      font-size: 1em;
+      transition: background 0.2s ease;
     }
 
-    .chat-actions i {
+    .chat-actions button:hover {
+      background-color: #d0d0d0;
+    }
+
+    .chat-input-bar {
+      display: flex;
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.15);
+      overflow: hidden;
+      border-bottom: 2px solid #0077cc;
+    }
+
+    .chat-input-bar input {
+      flex: 1;
+      padding: 14px;
+      font-size: 1em;
+      border: none;
+      outline: none;
+      background: white;
+    }
+
+    .chat-input-bar button {
+      padding: 0 16px;
+      background: white;
+      border: none;
+      color: #333;
+      cursor: pointer;
       font-size: 1.2em;
+      transition: color 0.2s ease;
+    }
+
+    .chat-input-bar button:hover {
+      color: #0077cc;
     }
 
     .sidebar {
@@ -261,26 +263,26 @@
       </div>
 
       <div class="chat-log" id="chatLog"></div>
+
+      <!-- Chat Input + Buttons -->
+      <div class="chat-input-wrapper">
+        <div class="chat-actions">
+          <button onclick="newChat()" title="New Chat"><i class="fas fa-plus"></i></button>
+          <button onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
+        </div>
+        <div class="chat-input-bar">
+          <input type="text" id="userInput" placeholder="Type a new question..." />
+          <button onclick="sendMessage()" title="Send"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
     </div>
 
-    <!-- Chat History Sidebar -->
+    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <h3>Chat History</h3>
       <div class="history-item">How do I reset my password?</div>
       <div class="history-item">Where’s the latest timesheet?</div>
       <div class="history-item">Explain ISO 9001</div>
-    </div>
-  </div>
-
-  <!-- Input + Action Buttons -->
-  <div class="chat-input-container">
-    <div class="chat-input">
-      <input type="text" id="userInput" placeholder="Ask a question..." />
-      <button onclick="sendMessage()">Send</button>
-    </div>
-    <div class="chat-actions">
-      <button onclick="newChat()" title="New Chat"><i class="fas fa-plus"></i></button>
-      <button onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
     </div>
   </div>
 
