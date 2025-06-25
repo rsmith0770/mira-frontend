@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Mira GPT</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a2e0ad6050.js" crossorigin="anonymous"></script>
   <style>
     body {
       margin: 0;
@@ -49,7 +50,6 @@
     .top-right button {
       padding: 8px;
       font-size: 1em;
-      font-family: 'Inter', sans-serif;
       border: none;
       border-radius: 4px;
     }
@@ -74,7 +74,7 @@
       display: flex;
       flex-direction: column;
       padding: 20px;
-      padding-bottom: 100px;
+      padding-bottom: 120px;
       box-sizing: border-box;
       position: relative;
     }
@@ -150,7 +150,9 @@
       border-top: 1px solid #ddd;
       display: flex;
       justify-content: center;
-      padding: 15px 20px;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 20px;
     }
 
     .chat-input {
@@ -158,6 +160,7 @@
       max-width: 900px;
       display: flex;
       gap: 10px;
+      margin-bottom: 5px;
     }
 
     .chat-input input {
@@ -174,6 +177,28 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+    }
+
+    .chat-actions {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+    }
+
+    .chat-actions button {
+      background-color: #666;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+
+    .chat-actions i {
+      font-size: 1.2em;
     }
 
     .sidebar {
@@ -201,22 +226,6 @@
       font-size: 0.9em;
       cursor: pointer;
     }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .controls button {
-      background-color: #666;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 0.9em;
-    }
   </style>
 </head>
 <body>
@@ -240,11 +249,6 @@
   <div class="main">
     <!-- Chat Panel -->
     <div class="chat-wrapper">
-      <div class="controls">
-        <button onclick="newChat()">New Chat</button>
-        <button onclick="clearChat()">Clear</button>
-      </div>
-
       <div class="prompt-box" id="promptBox">
         <img src="bhclogo.png" alt="BHC Logo" />
         <h1>Welcome to Mira</h1>
@@ -268,11 +272,15 @@
     </div>
   </div>
 
-  <!-- Input -->
+  <!-- Input + Action Buttons -->
   <div class="chat-input-container">
     <div class="chat-input">
       <input type="text" id="userInput" placeholder="Ask a question..." />
       <button onclick="sendMessage()">Send</button>
+    </div>
+    <div class="chat-actions">
+      <button onclick="newChat()" title="New Chat"><i class="fas fa-plus"></i></button>
+      <button onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
     </div>
   </div>
 
