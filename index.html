@@ -168,16 +168,19 @@
       border-bottom: 2px solid #0077cc;
     }
 
-    .chat-input-bar input {
+    .chat-input-bar textarea {
       flex: 1;
       padding: 14px 20px 8px 20px;
       font-size: 0.95em;
       border: none;
       outline: none;
       background: white;
-      height: 60px;
-      line-height: 1.2;
-      vertical-align: top;
+      min-height: 60px;
+      max-height: 180px;
+      resize: none;
+      overflow-y: auto;
+      line-height: 1.4;
+      font-family: 'Inter', sans-serif;
     }
 
     .chat-input-bar button {
@@ -283,7 +286,7 @@
           <button onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
         </div>
         <div class="chat-input-bar">
-          <input type="text" id="userInput" placeholder="Type a new question..." />
+          <textarea id="userInput" placeholder="Type a new question..." rows="1"></textarea>
           <button onclick="sendMessage()" title="Send"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
@@ -302,6 +305,7 @@
     const chatLog = document.getElementById('chatLog');
     const promptBox = document.getElementById('promptBox');
     const sidebar = document.getElementById('sidebar');
+    const textarea = document.getElementById('userInput');
 
     const promptList = [
       "How do I submit a timesheet?",
@@ -345,6 +349,7 @@
 
       chatLog.innerHTML += userBubble + aiBubble;
       input.value = '';
+      input.style.height = '60px';
       chatLog.scrollTop = chatLog.scrollHeight;
 
       promptBox.style.display = 'none';
@@ -370,6 +375,12 @@
     function toggleSidebar() {
       sidebar.classList.toggle('hidden');
     }
+
+    // Auto-resize textarea
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 180) + 'px';
+    });
 
     window.onload = () => {
       chatLog.classList.remove('visible');
