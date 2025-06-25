@@ -382,6 +382,14 @@
       textarea.style.height = Math.min(textarea.scrollHeight, 180) + 'px';
     });
 
+    // Enter = send, Shift+Enter = newline
+    textarea.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+      }
+    });
+
     window.onload = () => {
       chatLog.classList.remove('visible');
       promptBox.style.display = 'flex';
