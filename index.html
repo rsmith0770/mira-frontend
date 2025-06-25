@@ -341,20 +341,46 @@
     function sendMessage() {
       const input = document.getElementById('userInput');
       const source = document.getElementById('dataSource').value;
-
-      if (!input.value.trim()) return;
-
-      const userBubble = `<div class="message user-message">You: ${input.value}</div>`;
-      const aiBubble = `<div class="message ai-message">Mira: [thinking using <em>${source}</em> data...]</div>`;
-
-      chatLog.innerHTML += userBubble + aiBubble;
+      const userText = input.value.trim();
+    
+      if (!userText) return;
+    
+      // Add user message
+      const userBubble = document.createElement('div');
+      userBubble.className = 'message user-message';
+      userBubble.textContent = `You: ${userText}`;
+      chatLog.appendChild(userBubble);
+    
+      // Add placeholder for AI response
+      const aiBubble = document.createElement('div');
+      aiBubble.className = 'message ai-message';
+      aiBubble.textContent = 'Mira is typing...';
+      chatLog.appendChild(aiBubble);
+    
       input.value = '';
       input.style.height = '60px';
-      chatLog.scrollTop = chatLog.scrollHeight;
-
       promptBox.style.display = 'none';
-      chatLog.classList.add('visible');
+      chatLog.scrollTop = chatLog.scrollHeight;
+    
+      // Simulate streaming response
+      const fullResponse = `Mira: Here's a simulated streamed response using ${source} data.`;
+      let index = 0;
+    
+      const streamInterval = setInterval(() => {
+        if (index === 0) {
+          aiBubble.textContent = 'Mira: ';
+        }
+
+    if (index < fullResponse.length - 6) {
+      aiBubble.textContent += fullResponse.charAt(index + 6); // skip "Mira: "
+      index++;
+      chatLog.scrollTop = chatLog.scrollHeight;
+    } else {
+      clearInterval(streamInterval);
     }
+  }, 35); // adjust speed here
+}
+
 
     function usePrompt(text) {
       document.getElementById('userInput').value = text;
