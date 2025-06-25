@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <title>Mira GPT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Inter', sans-serif;
       background: #f5f5f5;
       height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
-    /* Top Bar */
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -36,14 +36,15 @@
     .top-left h1 {
       margin: 0;
       font-size: 1.5em;
+      font-weight: 600;
     }
 
     .top-right select {
       padding: 8px;
       font-size: 1em;
+      font-family: 'Inter', sans-serif;
     }
 
-    /* Layout */
     .main {
       flex: 1;
       display: flex;
@@ -51,7 +52,6 @@
       overflow: hidden;
     }
 
-    /* Sidebar */
     .sidebar {
       width: 200px;
       background-color: #e0e0e0;
@@ -68,6 +68,7 @@
 
     .sidebar h3 {
       margin-top: 0;
+      font-weight: 600;
     }
 
     .history-item {
@@ -79,7 +80,6 @@
       cursor: pointer;
     }
 
-    /* Chat Area */
     .chat-area {
       flex: 1;
       padding: 20px;
@@ -107,6 +107,7 @@
       flex: 1;
       padding: 10px;
       font-size: 1em;
+      font-family: 'Inter', sans-serif;
     }
 
     button {
@@ -117,6 +118,7 @@
       border-radius: 4px;
       background-color: #004b8d;
       color: white;
+      font-family: 'Inter', sans-serif;
     }
 
     .controls {
@@ -130,6 +132,30 @@
 
     .toggle-sidebar {
       background-color: #004b8d;
+    }
+
+    /* Prompt Bubbles */
+    .prompts {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .prompt-btn {
+      flex: 1;
+      background: #e8f0fe;
+      border: 1px solid #b0c4de;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      font-size: 0.95em;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .prompt-btn:hover {
+      background: #d0e4ff;
     }
   </style>
 </head>
@@ -169,6 +195,13 @@
         </div>
       </div>
 
+      <!-- Prompt Suggestions -->
+      <div class="prompts" id="promptBox">
+        <div class="prompt-btn" onclick="usePrompt('How do I submit a timesheet?')">How do I submit a timesheet?</div>
+        <div class="prompt-btn" onclick="usePrompt('Summarise the latest ISO audit')">Summarise the latest ISO audit</div>
+        <div class="prompt-btn" onclick="usePrompt('Search for welding procedures')">Search for welding procedures</div>
+      </div>
+
       <div class="chat-log" id="chatLog">
         <div><strong>Mira:</strong> Hello, how can I help you today?</div>
       </div>
@@ -181,9 +214,11 @@
   </div>
 
   <script>
+    const chatLog = document.getElementById('chatLog');
+    const promptBox = document.getElementById('promptBox');
+
     function sendMessage() {
       const input = document.getElementById('userInput');
-      const log = document.getElementById('chatLog');
       const source = document.getElementById('dataSource').value;
 
       if (!input.value.trim()) return;
@@ -191,13 +226,21 @@
       const userMsg = `<div><strong>You:</strong> ${input.value}</div>`;
       const systemMsg = `<div><strong>Mira:</strong> [thinking using <em>${source}</em> data...]</div>`;
 
-      log.innerHTML += userMsg + systemMsg;
+      chatLog.innerHTML += userMsg + systemMsg;
       input.value = '';
-      log.scrollTop = log.scrollHeight;
+      chatLog.scrollTop = chatLog.scrollHeight;
+
+      promptBox.style.display = 'none'; // hide prompts after first message
+    }
+
+    function usePrompt(text) {
+      document.getElementById('userInput').value = text;
+      sendMessage();
     }
 
     function clearChat() {
-      document.getElementById('chatLog').innerHTML = '<div><strong>Mira:</strong> Hello, how can I help you today?</div>';
+      chatLog.innerHTML = '<div><strong>Mira:</strong> Hello, how can I help you today?</div>';
+      promptBox.style.display = 'flex';
     }
 
     function newChat() {
@@ -208,6 +251,15 @@
       const sidebar = document.getElementById('sidebar');
       sidebar.classList.toggle('hidden');
     }
+
+    // On load, if chat is empty, show prompts
+    window.onload = () => {
+      if (chatLog.children.length <= 1) {
+        promptBox.style.display = 'flex';
+      } else {
+        promptBox.style.display = 'none';
+      }
+    };
   </script>
 
 </body>
