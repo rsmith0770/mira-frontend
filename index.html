@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BHC GPT</title>
+  <title>BHC Private GPT</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
@@ -32,7 +32,6 @@
       align-items: center;
       gap: 10px;
     }
-    .top-right select,
     .top-right button {
       padding: 6px 10px;
       font-size: 1em;
@@ -60,41 +59,12 @@
       min-height: calc(100vh - 48px);
     }
     .chat-log {
-      display: none;
       flex: 1;
       overflow-y: auto;
       padding: 20px;
       gap: 14px;
-      flex-direction: column;
-    }
-    .chat-log.visible {
-      display: flex;
-    }
-    .prompt-box {
-      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 0 20px;
-      min-height: 400px;
-    }
-    .prompt-row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-    }
-    .prompt-btn {
-      background: #e8f0fe;
-      border: 1px solid #b0c4de;
-      border-radius: 8px;
-      padding: 12px 20px;
-      font-size: 1em;
-      cursor: pointer;
-      min-width: 220px;
-      text-align: center;
     }
     .chat-input-wrapper {
       display: flex;
@@ -103,24 +73,8 @@
       width: 100%;
       max-width: 900px;
       margin: 0 auto;
-      margin-top: auto;
       padding: 20px;
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-    }
-    .chat-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .chat-actions button {
-      background: #f1f3f5;
-      border: none;
-      border-radius: 10px;
-      width: 44px;
-      height: 44px;
-      font-size: 1.2em;
-      color: #666;
-      cursor: pointer;
     }
     .chat-input-bar {
       display: flex;
@@ -138,7 +92,6 @@
       border: none;
       outline: none;
       height: 60px;
-      line-height: 1.2;
     }
     .chat-input-bar button {
       height: 60px;
@@ -171,30 +124,6 @@
       border-top-left-radius: 0;
       white-space: pre-wrap;
     }
-    .history-panel {
-      position: absolute;
-      top: 48px;
-      right: 0;
-      width: 260px;
-      height: calc(100% - 48px);
-      background: #fff;
-      box-shadow: -2px 0 8px rgba(0,0,0,0.1);
-      overflow-y: auto;
-      transform: translateX(100%);
-      transition: transform 0.3s ease;
-      z-index: 10;
-    }
-    .history-panel.open {
-      transform: translateX(0);
-    }
-    .history-item {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-    }
-    .history-item:hover {
-      background: #f5f5f5;
-    }
     .citations {
       margin-top: 10px;
       font-size: 0.85em;
@@ -215,250 +144,105 @@
   <div class="top-bar">
     <div class="top-left"><h1>BHC Private GPT</h1></div>
     <div class="top-right">
-      <button id="historyBtn" onclick="toggleHistory()" title="Chat History">
-        <i class="fas fa-history"></i>
-      </button>
-      <select id="dataSource">
-        <option value="internet">Internet</option>
-        <option value="company">Company</option>
-      </select>
+      <button onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
     </div>
   </div>
-
   <div class="main">
     <div class="chat-wrapper">
-      <div class="prompt-box" id="promptBox">
-        <h1>Welcome to Mira</h1>
-        <p>Mira is your general AI assistant.</p>
-        <div class="prompt-row" id="promptRow"></div>
-      </div>
       <div class="chat-log" id="chatLog"></div>
       <div class="chat-input-wrapper">
-        <div class="chat-actions">
-          <button onclick="newChat()" title="New Chat"><i class="fas fa-plus"></i></button>
-          <button onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
-        </div>
         <div class="chat-input-bar">
-          <input type="text" id="userInput" placeholder="Type a new question…" />
+          <input type="text" id="userInput" placeholder="Type a new question…" onkeydown="if(event.key==='Enter')sendMessage();" />
           <button onclick="sendMessage()" title="Send"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </div>
-
-    <div class="history-panel" id="historyPanel"></div>
   </div>
-
   <script>
-    const chatLog      = document.getElementById('chatLog');
-    const promptBox    = document.getElementById('promptBox');
-    const input        = document.getElementById('userInput');
-    const historyPanel = document.getElementById('historyPanel');
-    const promptList   = [
-      "How do I submit a timesheet?",
-      "Summarise the latest ISO audit",
-      "Search for welding procedures",
-      "Where can I find toolbox talks?",
-      "List upcoming site visits"
-    ];
-
-    let sessions = [];
-    let currentSession = [];
-
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') sendMessage();
-    });
-
-    function toggleHistory() {
-      historyPanel.classList.toggle('open');
-    }
-
-    function renderHistory() {
-      historyPanel.innerHTML = '';
-      sessions.forEach((sess, idx) => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        item.innerText = sess.title;
-        item.onclick = () => loadSession(idx);
-        historyPanel.appendChild(item);
-      });
-    }
-
-    function loadSession(idx) {
-      currentSession = [...sessions[idx].messages];
-      chatLog.innerHTML = '';
-      currentSession.forEach(msg => {
-        const cls = msg.role === 'user' ? 'user-message' : 'ai-message';
-        const label = msg.role === 'user' ? 'You:' : 'Mira:';
-        chatLog.innerHTML += `<div class="message ${cls}">${label} ${msg.content}</div>`;
-      });
-      chatLog.classList.add('visible');
-      promptBox.style.display = 'none';
-      historyPanel.classList.remove('open');
-    }
-
-    function generatePrompts() {
-      const used = new Set();
-      const row = document.getElementById('promptRow');
-      row.innerHTML = '';
-      while (used.size < 3) {
-        const text = promptList[Math.floor(Math.random() * promptList.length)];
-        if (!used.has(text)) {
-          used.add(text);
-          const btn = document.createElement('div');
-          btn.className = 'prompt-btn';
-          btn.innerText = text;
-          btn.onclick = () => { input.value = text; sendMessage(); };
-          row.appendChild(btn);
-        }
-      }
-    }
-
-    function clearChat() {
-      chatLog.innerHTML = '';
-      chatLog.classList.remove('visible');
-      promptBox.style.display = 'flex';
-      generatePrompts();
-      currentSession = [];
-    }
-
-    function newChat() {
-      if (currentSession.length) {
-        const title = currentSession[0].content.slice(0, 30) || `Chat ${sessions.length+1}`;
-        sessions.push({ title, messages: [...currentSession] });
-        renderHistory();
-      }
-      clearChat();
-    }
-
     async function sendMessage() {
+      const input = document.getElementById('userInput');
       const text = input.value.trim();
       if (!text) return;
 
-      const source = document.getElementById('dataSource').value;
-      const systemMessage = source === 'company'
-        ? `You are a professional and friendly AI assistant called Mira working for BHC.
-      
-      ### Answer Logic ###
-      Company Data:
-      - Use Azure AI Search to find answers in BHC’s documents, firstly relating to BHC.
-      - Summarize relevant documents clearly using your own words.
-      - When possible, present answers as:
-        1. Numbered steps (for processes)
-        2. Bullet points (for key facts or lists)
-        3. Tables (if comparing data or showing multiple results)
-      - When a question references “users,” “staff,” “employees,” or similar terms, prioritise documents that explicitly mention “BHC” or its context over generic sources.
-      - Assume that the user is asking about internal BHC policies, guidance, or operations unless otherwise specified.
-      
-      **General Knowledge:**
-      - If the user’s question is not related to BHC, use general knowledge to answer.
-      - Do not skip the question—even if no BHC data is found.
-      - If unsure, respond with: “I'm not 100% certain, but…”
-      
-      **Presentation Rules:**
-      - Do **not** quote long document sections directly.
-      - Always explain using concise, professional language.
-      - Use lists or structure where it improves clarity.
-      - For step-by-step tasks, return instructions as a **clean, numbered list**.
-      
-      **Other Rules:**
-      - If a question is unclear, ask for clarification.
-      - If a table is present, read it line by line to extract and compare data.
-      - Never return an empty response due to missing company data.`
-      
-        : `You are a helpful assistant. Only answer using general knowledge. Do not reference company or internal documents.`;
-
-      chatLog.innerHTML += `<div class="message user-message">You: ${text}</div>`;
-      currentSession.push({ role: 'user', content: text });
-      promptBox.style.display = 'none';
-      chatLog.classList.add('visible');
-      chatLog.scrollTop = chatLog.scrollHeight;
+      const chatLog = document.getElementById('chatLog');
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user-message';
+      userMsg.textContent = 'You: ' + text;
+      chatLog.appendChild(userMsg);
       input.value = '';
 
       const aiBubble = document.createElement('div');
       aiBubble.className = 'message ai-message';
       aiBubble.textContent = 'Mira: ';
       chatLog.appendChild(aiBubble);
-      chatLog.scrollTop = chatLog.scrollHeight;
 
-      try {
-        const res = await fetch("https://bhcopenai-uk.openai.azure.com/openai/deployments/gpt-4.1/chat/completions?api-version=2025-01-01-preview", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "text/event-stream",
-            "api-key": "BybXGJK5LYxNKH9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL"
-          },
-          body: JSON.stringify({
-            messages: [
-              { role: "system", content: systemMessage },
-              { role: "user", content: text }
-            ],
-            temperature: 0.7,
-            top_p: 0.95,
-            stream: true
-          })
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error?.message || 'Unknown error');
-        }
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        let fullResponse = '';
-        let citations = [];
-
-        while (!done) {
-          const { value, done: doneReading } = await reader.read();
-          done = doneReading;
-          const chunk = decoder.decode(value, { stream: true });
-
-          chunk.split("\n").forEach(line => {
-            if (!line.startsWith("data: ")) return;
-            const data = line.slice(6).trim();
-            if (data === "[DONE]") return;
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices[0].delta;
-
-              if (delta?.content) {
-                aiBubble.textContent += delta.content;
-                fullResponse += delta.content;
-                chatLog.scrollTop = chatLog.scrollHeight;
+      const res = await fetch('https://uksouth.api.cognitive.microsoft.com/openai/deployments/gpt-4.1/extensions/chat/completions?api-version=2023-08-01-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX'
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'You are a professional and friendly AI assistant called Mira working for BHC. Use BHC documents from Azure Search whenever possible. Present answers clearly with structure. Include citations if available.' },
+            { role: 'user', content: text }
+          ],
+          dataSources: [
+            {
+              type: 'AzureCognitiveSearch',
+              parameters: {
+                endpoint: 'https://bhcazuresearch.search.windows.net',
+                indexName: 'bhcindex',
+                authentication: { type: 'apiKey', key: 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX' }
               }
+            }
+          ],
+          temperature: 0.7,
+          top_p: 0.95,
+          stream: true
+        })
+      });
 
-              if (parsed.choices[0].context?.citations) {
-                citations = parsed.choices[0].context.citations;
-              }
-            } catch {}
-          });
-        }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let citations = [];
 
-        if (citations.length) {
-          const citationBlock = document.createElement("div");
-          citationBlock.className = "citations";
-          citationBlock.innerHTML = citations.map((c, i) => `
-            <div><sup>[${i + 1}]</sup> ${c.title || 'Untitled'}${c.url ? ` – <a href="${c.url}" target="_blank">${c.url}</a>` : ''}</div>
-          `).join("");
-          aiBubble.appendChild(citationBlock);
-        }
-
-        currentSession.push({
-          role: 'assistant',
-          content: aiBubble.textContent.replace(/^Mira:\s*/, '')
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunk = decoder.decode(value, { stream: true });
+        chunk.split('\n').forEach(line => {
+          if (!line.startsWith('data: ')) return;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') return;
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices[0]?.delta;
+            if (delta?.content) {
+              aiBubble.textContent += delta.content;
+              chatLog.scrollTop = chatLog.scrollHeight;
+            }
+            if (parsed.choices[0]?.context?.citations) {
+              citations = parsed.choices[0].context.citations;
+            }
+          } catch (err) {
+            console.warn('Stream parse error:', err);
+          }
         });
+      }
 
-      } catch (err) {
-        console.error(err);
-        aiBubble.textContent += `<Error: ${err.message}>`;
+      if (citations.length) {
+        const citationBlock = document.createElement('div');
+        citationBlock.className = 'citations';
+        citationBlock.innerHTML = citations.map((c, i) => `<div><sup>[${i + 1}]</sup> ${c.title || 'Untitled'}${c.url ? ` – <a href="${c.url}" target="_blank">${c.url}</a>` : ''}</div>`).join('');
+        aiBubble.appendChild(citationBlock);
       }
     }
 
-    window.onload = () => {
-      generatePrompts();
-    };
+    function clearChat() {
+      document.getElementById('chatLog').innerHTML = '';
+    }
   </script>
 </body>
 </html>
