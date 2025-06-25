@@ -78,12 +78,14 @@
     }
 
     .prompt-box {
-      margin-top: 80px;
+      flex: 1;
       display: flex;
       flex-direction: column;
+      justify-content: center;         /* centers vertically */
       align-items: center;
       text-align: center;
       padding: 0 20px;
+      min-height: 400px;               /* ensures it doesn't collapse */
     }
 
     .prompt-box h1 {
@@ -92,7 +94,7 @@
     }
 
     .prompt-box p {
-      margin: 5px 0 30px;
+      margin: 5px 0 60px;
       font-size: 1em;
       color: #555;
     }
