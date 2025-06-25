@@ -338,48 +338,78 @@
       }
     }
 
-    function sendMessage() {
-      const input = document.getElementById('userInput');
-      const source = document.getElementById('dataSource').value;
-      const userText = input.value.trim();
-    
-      if (!userText) return;
-    
-      // Add user message
-      const userBubble = document.createElement('div');
-      userBubble.className = 'message user-message';
-      userBubble.textContent = `You: ${userText}`;
-      chatLog.appendChild(userBubble);
-    
-      // Add placeholder for AI response
-      const aiBubble = document.createElement('div');
-      aiBubble.className = 'message ai-message';
-      aiBubble.textContent = 'Mira is typing...';
-      chatLog.appendChild(aiBubble);
-    
-      input.value = '';
-      input.style.height = '60px';
-      promptBox.style.display = 'none';
-      chatLog.scrollTop = chatLog.scrollHeight;
-    
-      // Simulate streaming response
-      const fullResponse = `Mira: Here's a simulated streamed response using ${source} data.`;
-      let index = 0;
-    
-      const streamInterval = setInterval(() => {
-        if (index === 0) {
-          aiBubble.textContent = 'Mira: ';
-        }
+    async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const source = document.getElementById('dataSource').value;
+  const userText = input.value.trim();
 
-    if (index < fullResponse.length - 6) {
-      aiBubble.textContent += fullResponse.charAt(index + 6); // skip "Mira: "
-      index++;
-      chatLog.scrollTop = chatLog.scrollHeight;
-    } else {
-      clearInterval(streamInterval);
+  if (!userText) return;
+
+  // Append user message
+  const userBubble = document.createElement('div');
+  userBubble.className = 'message user-message';
+  userBubble.textContent = `You: ${userText}`;
+  chatLog.appendChild(userBubble);
+
+  // Placeholder for AI response
+  const aiBubble = document.createElement('div');
+  aiBubble.className = 'message ai-message';
+  aiBubble.textContent = 'Mira is typing...';
+  chatLog.appendChild(aiBubble);
+
+  input.value = '';
+  input.style.height = '60px';
+  promptBox.style.display = 'none';
+  chatLog.scrollTop = chatLog.scrollHeight;
+
+  // Define system message based on dropdown
+  const systemMessage = (source === 'company')
+    ? "You are Mira, a helpful assistant answering questions strictly based on indexed company documents. If the answer cannot be found in company data, respond: 'I'm not sure based on internal data.'"
+    : "You are Mira, a helpful assistant. Use general knowledge and any company data available, but prioritize factual helpful answers.";
+
+  const payload = {
+    messages: [
+      { role: "system", content: systemMessage },
+      { role: "user", content: userText }
+    ]
+  };
+
+  try {
+    const response = await fetch("https://bhcopenai-uk.openai.azure.com/openai/deployments/gpt-4.1/chat/completions?api-version=2025-01-01-preview", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": "BybXGJK5LYxNKH9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL" // <- replace with actual key or call from secure location
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      aiBubble.textContent = `Mira: Error ${response.status} - ${response.statusText}`;
+      return;
     }
-  }, 35); // adjust speed here
+
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || "Mira: (No response)";
+    
+    // Stream effect
+    aiBubble.textContent = "Mira: ";
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < reply.length) {
+        aiBubble.textContent += reply.charAt(i);
+        i++;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      } else {
+        clearInterval(interval);
+      }
+    }, 30);
+  } catch (err) {
+    aiBubble.textContent = `Mira: Error contacting server.`;
+    console.error("API error:", err);
+  }
 }
+
 
 
     function usePrompt(text) {
