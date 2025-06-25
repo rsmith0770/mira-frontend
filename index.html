@@ -97,9 +97,32 @@
       right: 0;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
+      align-items: center;
+      text-align: center;
       padding: 0 20px;
+    }
+
+    .prompt-box img {
+      height: 80px;
+      margin-bottom: 20px;
+    }
+
+    .prompt-box h1 {
+      font-size: 2em;
+      margin: 0;
+    }
+
+    .prompt-box p {
+      margin: 5px 0 30px;
+      font-size: 1em;
+      color: #555;
+    }
+
+    .prompt-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
     }
 
     .prompt-btn {
@@ -110,6 +133,8 @@
       font-size: 1em;
       cursor: pointer;
       transition: background 0.2s ease;
+      min-width: 220px;
+      text-align: center;
     }
 
     .prompt-btn:hover {
@@ -221,9 +246,14 @@
       </div>
 
       <div class="prompt-box" id="promptBox">
-        <div class="prompt-btn" onclick="usePrompt('How do I submit a timesheet?')">How do I submit a timesheet?</div>
-        <div class="prompt-btn" onclick="usePrompt('Summarise the latest ISO audit')">Summarise the latest ISO audit</div>
-        <div class="prompt-btn" onclick="usePrompt('Search for welding procedures')">Search for welding procedures</div>
+        <img src="bhclogo.png" alt="BHC Logo" />
+        <h1>Welcome to Mira</h1>
+        <p>Mira is your general AI assistant.</p>
+        <div class="prompt-row">
+          <div class="prompt-btn" onclick="usePrompt('How do I submit a timesheet?')">How do I submit a timesheet?</div>
+          <div class="prompt-btn" onclick="usePrompt('Summarise the latest ISO audit')">Summarise the latest ISO audit</div>
+          <div class="prompt-btn" onclick="usePrompt('Search for welding procedures')">Search for welding procedures</div>
+        </div>
       </div>
 
       <div class="chat-log" id="chatLog"></div>
