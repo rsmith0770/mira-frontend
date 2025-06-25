@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Mira GPT</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://kit.fontawesome.com/a2e0ad6050.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     body {
       margin: 0;
@@ -27,11 +27,6 @@
     .top-left {
       display: flex;
       align-items: center;
-    }
-
-    .top-left img {
-      height: 40px;
-      margin-right: 15px;
     }
 
     .top-left h1 {
@@ -210,6 +205,7 @@
       padding: 15px;
       overflow-y: auto;
       border-left: 1px solid #ccc;
+      transition: all 0.3s ease;
     }
 
     .sidebar.hidden {
@@ -236,7 +232,6 @@
   <!-- Top Bar -->
   <div class="top-bar">
     <div class="top-left">
-      <img src="BHCLogo.png" alt="BHC Logo">
       <h1>Mira GPT</h1>
     </div>
     <div class="top-right">
@@ -253,7 +248,6 @@
     <!-- Chat Panel -->
     <div class="chat-wrapper">
       <div class="prompt-box" id="promptBox">
-        <img src="BHCLogo.png" alt="BHC Logo" />
         <h1>Welcome to Mira</h1>
         <p>Mira is your general AI assistant.</p>
         <div class="prompt-row">
@@ -279,7 +273,7 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar hidden" id="sidebar">
       <h3>Chat History</h3>
       <div class="history-item">How do I reset my password?</div>
       <div class="history-item">Where’s the latest timesheet?</div>
@@ -331,6 +325,7 @@
     window.onload = () => {
       chatLog.classList.remove('visible');
       promptBox.style.display = 'flex';
+      sidebar.classList.add('hidden'); // hide history on load
     };
   </script>
 
