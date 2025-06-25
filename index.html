@@ -9,7 +9,7 @@
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(to bottom right, #f8fbff, #eef3f8);
+      background: #f9fafa;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -22,11 +22,6 @@
       background: linear-gradient(to top, #003a6d, #0059b3);
       color: white;
       padding: 10px 20px;
-    }
-
-    .top-left {
-      display: flex;
-      align-items: center;
     }
 
     .top-left h1 {
@@ -76,13 +71,10 @@
     .chat-log {
       flex: 1;
       overflow-y: auto;
-      padding: 10px;
-      margin-bottom: 30px;
-      display: none;
-    }
-
-    .chat-log.visible {
-      display: block;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
     .prompt-box {
@@ -137,11 +129,9 @@
       margin-left: auto;
       margin-right: auto;
       margin-top: auto;
-      padding: 30px 20px;
-      border-top: 1px solid #ddd;
-      background: linear-gradient(to top, #ffffff 60%, #f3f6f9);
-      box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
-      border-radius: 16px 16px 0 0;
+      padding: 20px;
+      background: transparent;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     }
 
     .chat-actions {
@@ -199,6 +189,29 @@
 
     .chat-input-bar button:hover {
       color: #0077cc;
+    }
+
+    .message {
+      max-width: 85%;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 0.95em;
+      line-height: 1.4;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background: #dcf2ff;
+      color: #003a6d;
+      border-top-right-radius: 0;
+    }
+
+    .ai-message {
+      align-self: flex-start;
+      background: #f4f4f4;
+      color: #222;
+      border-top-left-radius: 0;
     }
 
     .sidebar {
@@ -294,10 +307,10 @@
 
       if (!input.value.trim()) return;
 
-      const userMsg = `<div><strong>You:</strong> ${input.value}</div>`;
-      const systemMsg = `<div><strong>Mira:</strong> [thinking using <em>${source}</em> data...]</div>`;
+      const userBubble = `<div class="message user-message">You: ${input.value}</div>`;
+      const aiBubble = `<div class="message ai-message">Mira: [thinking using <em>${source}</em> data...]</div>`;
 
-      chatLog.innerHTML += userMsg + systemMsg;
+      chatLog.innerHTML += userBubble + aiBubble;
       input.value = '';
       chatLog.scrollTop = chatLog.scrollHeight;
 
