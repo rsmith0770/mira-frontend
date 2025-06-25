@@ -44,12 +44,6 @@
       border-radius: 4px;
     }
 
-    .top-right button {
-      background-color: #004b8d;
-      color: white;
-      cursor: pointer;
-    }
-
     .main {
       flex: 1;
       display: flex;
@@ -118,10 +112,6 @@
       text-align: center;
     }
 
-    .prompt-btn:hover {
-      background: #d0e4ff;
-    }
-
     .chat-input-wrapper {
       display: flex;
       gap: 10px;
@@ -151,11 +141,6 @@
       font-size: 1.2em;
       color: #666;
       cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .chat-actions button:hover {
-      background-color: #e0e0e0;
     }
 
     .chat-input-bar {
@@ -168,19 +153,16 @@
       border-bottom: 2px solid #0077cc;
     }
 
-    .chat-input-bar textarea {
+    .chat-input-bar input {
       flex: 1;
       padding: 14px 20px 8px 20px;
       font-size: 0.95em;
       border: none;
       outline: none;
       background: white;
-      min-height: 60px;
-      max-height: 180px;
-      resize: none;
-      overflow-y: auto;
-      line-height: 1.4;
-      font-family: 'Inter', sans-serif;
+      height: 60px;
+      line-height: 1.2;
+      vertical-align: top;
     }
 
     .chat-input-bar button {
@@ -191,13 +173,8 @@
       color: #333;
       cursor: pointer;
       font-size: 1.3em;
-      transition: color 0.2s ease;
       display: flex;
       align-items: flex-end;
-    }
-
-    .chat-input-bar button:hover {
-      color: #0077cc;
     }
 
     .message {
@@ -222,44 +199,14 @@
       color: #222;
       border-top-left-radius: 0;
     }
-
-    .sidebar {
-      width: 200px;
-      background-color: #e0e0e0;
-      padding: 15px;
-      overflow-y: auto;
-      border-left: 1px solid #ccc;
-      transition: all 0.3s ease;
-    }
-
-    .sidebar.hidden {
-      display: none;
-    }
-
-    .sidebar h3 {
-      margin-top: 0;
-    }
-
-    .history-item {
-      background: white;
-      border: 1px solid #ccc;
-      padding: 8px;
-      border-radius: 5px;
-      margin-bottom: 10px;
-      font-size: 0.9em;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
-
-  <!-- Top Bar -->
   <div class="top-bar">
     <div class="top-left">
       <h1>BHC Private GPT</h1>
     </div>
     <div class="top-right">
-      <button onclick="toggleSidebar()">☰</button>
       <select id="dataSource">
         <option value="internet">Internet</option>
         <option value="company">Company</option>
@@ -267,57 +214,36 @@
     </div>
   </div>
 
-  <!-- Main Layout -->
   <div class="main">
-    <!-- Chat Panel -->
     <div class="chat-wrapper">
       <div class="prompt-box" id="promptBox">
         <h1>Welcome to Mira</h1>
         <p>Mira is your general AI assistant.</p>
         <div class="prompt-row" id="promptRow"></div>
       </div>
-
       <div class="chat-log" id="chatLog"></div>
-
-      <!-- Chat Input + Buttons -->
       <div class="chat-input-wrapper">
         <div class="chat-actions">
           <button onclick="newChat()" title="New Chat"><i class="fas fa-plus"></i></button>
           <button onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
         </div>
         <div class="chat-input-bar">
-          <textarea id="userInput" placeholder="Type a new question..." rows="1"></textarea>
+          <input type="text" id="userInput" placeholder="Type a new question..." />
           <button onclick="sendMessage()" title="Send"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="sidebar hidden" id="sidebar">
-      <h3>Chat History</h3>
-      <div class="history-item">How do I reset my password?</div>
-      <div class="history-item">Where’s the latest timesheet?</div>
-      <div class="history-item">Explain ISO 9001</div>
     </div>
   </div>
 
   <script>
     const chatLog = document.getElementById('chatLog');
     const promptBox = document.getElementById('promptBox');
-    const sidebar = document.getElementById('sidebar');
-    const textarea = document.getElementById('userInput');
-
     const promptList = [
       "How do I submit a timesheet?",
       "Summarise the latest ISO audit",
       "Search for welding procedures",
       "Where can I find toolbox talks?",
-      "List upcoming site visits",
-      "Give me a project overview for JOB123",
-      "Explain the CE marking process",
-      "Find the latest training matrix",
-      "Show me equipment maintenance schedule",
-      "What’s the holiday request policy?"
+      "List upcoming site visits"
     ];
 
     function generatePrompts() {
@@ -338,80 +264,6 @@
       }
     }
 
-    async function sendMessage() {
-  const input = document.getElementById('userInput');
-  const source = document.getElementById('dataSource').value;
-  const userText = input.value.trim();
-
-  if (!userText) return;
-
-  // Append user message
-  const userBubble = document.createElement('div');
-  userBubble.className = 'message user-message';
-  userBubble.textContent = `You: ${userText}`;
-  chatLog.appendChild(userBubble);
-
-  // Placeholder for AI response
-  const aiBubble = document.createElement('div');
-  aiBubble.className = 'message ai-message';
-  aiBubble.textContent = 'Mira is typing...';
-  chatLog.appendChild(aiBubble);
-
-  input.value = '';
-  input.style.height = '60px';
-  promptBox.style.display = 'none';
-  chatLog.scrollTop = chatLog.scrollHeight;
-
-  // Define system message based on dropdown
-  const systemMessage = (source === 'company')
-    ? "You are Mira, a helpful assistant answering questions strictly based on indexed company documents. If the answer cannot be found in company data, respond: 'I'm not sure based on internal data.'"
-    : "You are Mira, a helpful assistant. Use general knowledge and any company data available, but prioritize factual helpful answers.";
-
-  const payload = {
-    messages: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userText }
-    ]
-  };
-
-  try {
-    const response = await fetch("https://bhcopenai-uk.openai.azure.com/openai/deployments/gpt-4.1/chat/completions?api-version=2025-01-01-preview", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": "BybXGJK5LYxNKH9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL" // <- replace with actual key or call from secure location
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      aiBubble.textContent = `Mira: Error ${response.status} - ${response.statusText}`;
-      return;
-    }
-
-    const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "Mira: (No response)";
-    
-    // Stream effect
-    aiBubble.textContent = "Mira: ";
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < reply.length) {
-        aiBubble.textContent += reply.charAt(i);
-        i++;
-        chatLog.scrollTop = chatLog.scrollHeight;
-      } else {
-        clearInterval(interval);
-      }
-    }, 30);
-  } catch (err) {
-    aiBubble.textContent = `Mira: Error contacting server.`;
-    console.error("API error:", err);
-  }
-}
-
-
-
     function usePrompt(text) {
       document.getElementById('userInput').value = text;
       sendMessage();
@@ -428,31 +280,61 @@
       clearChat();
     }
 
-    function toggleSidebar() {
-      sidebar.classList.toggle('hidden');
-    }
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      const source = document.getElementById('dataSource').value;
 
-    // Auto-resize textarea
-    textarea.addEventListener('input', () => {
-      textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 180) + 'px';
-    });
+      if (!input.value.trim()) return;
 
-    // Enter = send, Shift+Enter = newline
-    textarea.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+      let systemMessage = '';
+      if (source === 'company') {
+        systemMessage = "You are a professional and friendly AI assistant called Mira working for BHC.  ### Answer Logic ### Company Data: - Use Azure AI Search to find answers in BHC’s documents, firstly relating to BHC. - Summarize relevant documents clearly using your own words. - When possible, present answers as:   - Numbered steps (for processes)   - Bullet points (for key facts or lists)   - Tables (if comparing data or showing multiple results) - When a question references “users,” “staff,” “employees,” or similar terms, prioritise documents that explicitly mention “BHC” or its context over generic sources. - Assume that the user is asking about internal BHC policies, guidance, or operations unless otherwise specified.  **General Knowledge:** - If the user’s question is not related to BHC, use general knowledge to answer. - Do not skip the question—even if no BHC data is found. - If unsure, respond with: **\"I'm not 100% certain, but...\"**  **Presentation Rules:** - Do **not** quote long document sections directly. - Always explain using concise, professional language. - Use lists or structure where it improves clarity. - For step-by-step tasks, return instructions as a **clean, numbered list**.  **Other Rules:** - If a question is unclear, ask for clarification. - If a table is present, read it line by line to extract and compare data. - Never return an empty response due to missing company data.";
+      } else {
+        systemMessage = "You are a helpful assistant. Only answer using general knowledge. Do not reference company or internal documents.";
       }
-    });
+
+      const userMessage = input.value.trim();
+      const userBubble = `<div class="message user-message">You: ${userMessage}</div>`;
+      const aiBubble = `<div class="message ai-message">Mira: <em>Thinking...</em></div>`;
+
+      chatLog.innerHTML += userBubble + aiBubble;
+      input.value = '';
+      chatLog.scrollTop = chatLog.scrollHeight;
+      promptBox.style.display = 'none';
+      chatLog.classList.add('visible');
+
+      fetch("https://bhcopenai-uk.openai.azure.com/openai/deployments/gpt-4.1/chat/completions?api-version=2025-01-01-preview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": "BybXGJK5LYxNKH9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL"
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: systemMessage },
+            { role: "user", content: userMessage }
+          ],
+          temperature: 0.7,
+          top_p: 0.95
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const reply = data.choices?.[0]?.message?.content || "Error: No response.";
+        chatLog.lastChild.innerHTML = `<div class="message ai-message">Mira: ${reply}</div>`;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      })
+      .catch(err => {
+        console.error(err);
+        chatLog.lastChild.innerHTML = `<div class="message ai-message">Mira: <em>Error retrieving response.</em></div>`;
+      });
+    }
 
     window.onload = () => {
       chatLog.classList.remove('visible');
       promptBox.style.display = 'flex';
-      sidebar.classList.add('hidden');
       generatePrompts();
     };
   </script>
-
 </body>
 </html>
