@@ -157,37 +157,37 @@
       promptBox.style.display = 'none';
       chatLog.classList.add('visible');
 
-      const res = await fetch('https://uksouth.api.cognitive.microsoft.com/openai/deployments/gpt-4.1/extensions/chat/completions?api-version=2023-08-01-preview', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': 'BybXGJK5LYxNK9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL'
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: chatSystem },
-            { role: 'user', content: text }
-          ],
-          enhancements: {
-            dataSources: source === 'company'
-              ? [{
-                  type: 'AzureCognitiveSearch',
-                  parameters: {
-                    endpoint: 'https://bhcazuresearch.search.windows.net',
-                    indexName: 'bhcindex',
-                    authentication: {
-                      type: 'apiKey',
-                      key: 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX'
-                    }
-                  }
-                }]
-              : []
-          },
-          temperature: 0.7,
-          top_p: 0.95,
-          stream: true
-        })
-      });
+      const res = await fetch('https://bhcopenai-uk.openai.azure.com/openai/deployments/gpt-4.1/extensions/chat/completions?api-version=2023-08-01-preview', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'api-key': 'BybXGJK5LYxNKH9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL'
+  },
+  body: JSON.stringify({
+    messages: [
+      { role: 'system', content: chatSystem },
+      { role: 'user', content: text }
+    ],
+    enhancements: {
+      dataSources: source === 'company'
+        ? [{
+            type: 'AzureCognitiveSearch',
+            parameters: {
+              endpoint: 'https://bhcazuresearch.search.windows.net',
+              indexName: 'bhcindex',
+              authentication: {
+                type: 'apiKey',
+                key: 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX'
+              }
+            }
+          }]
+        : []
+    },
+    temperature: 0.7,
+    top_p: 0.95,
+    stream: true
+  })
+});
 
       if (!res.ok) {
         aiBubble.textContent += `\n[Error ${res.status}] Check API key, endpoint, or permissions.`;
