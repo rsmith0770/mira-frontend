@@ -27,9 +27,6 @@
     .message { max-width: 85%; padding: 14px 18px; border-radius: 14px; font-size: 0.95em; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
     .user-message { align-self: flex-end; background: #dcf2ff; color: #003a6d; border-top-right-radius: 0; }
     .ai-message { align-self: flex-start; background: #f4f4f4; color: #222; border-top-left-radius: 0; white-space: pre-wrap; }
-    .citations { margin-top: 10px; font-size: 0.85em; color: #555; border-top: 1px solid #ddd; padding-top: 6px; }
-    .citations a { color: #0077cc; text-decoration: none; }
-    .citations a:hover { text-decoration: underline; }
     .history-panel { position: absolute; top: 48px; right: 0; width: 260px; height: calc(100% - 48px); background: #fff; box-shadow: -2px 0 8px rgba(0,0,0,0.1); overflow-y: auto; transform: translateX(100%); transition: transform 0.3s ease; z-index: 10; }
     .history-panel.open { transform: translateX(0); }
     .history-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; }
@@ -41,7 +38,10 @@
     <div class="top-left"><h1>BHC Private GPT</h1></div>
     <div class="top-right">
       <button onclick="toggleHistory()" title="Chat History"><i class="fas fa-history"></i></button>
-      <select id="dataSource"><option value="company">Company</option><option value="internet">Internet</option></select>
+      <select id="dataSource">
+        <option value="company">Company</option>
+        <option value="internet">Internet</option>
+      </select>
     </div>
   </div>
   <div class="main">
@@ -139,9 +139,6 @@
       if (!text) return;
 
       const source = document.getElementById('dataSource').value;
-      const chatSystem = source === 'company'
-        ? 'You are Mira for BHC. Use Azure Search. Cite sources.'
-        : 'You are a helpful assistant. Use general knowledge only.';
 
       const userMsg = document.createElement('div');
       userMsg.className = 'message user-message';
@@ -157,84 +154,31 @@
       promptBox.style.display = 'none';
       chatLog.classList.add('visible');
 
-      const res = await fetch('https://bhcopenai-uk.openai.azure.com/openai/deployments/gpt-4.1/extensions/chat/completions?api-version=2023-08-01-preview', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'api-key': 'BybXGJK5LYxNKH9213Epqx7LmnvnWD8IXHweFyuCthPl02Ga0g0SJQQJ99BCACmepeSXJ3w3AAABACOGnrBL'
-  },
-  body: JSON.stringify({
-    messages: [
-      { role: 'system', content: chatSystem },
-      { role: 'user', content: text }
-    ],
-    enhancements: {
-      dataSources: source === 'company'
-        ? [{
-            type: 'AzureCognitiveSearch',
-            parameters: {
-              endpoint: 'https://bhcazuresearch.search.windows.net',
-              indexName: 'bhcindex',
-              authentication: {
-                type: 'apiKey',
-                key: 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX'
-              }
-            }
-          }]
-        : []
-    },
-    temperature: 0.7,
-    top_p: 0.95,
-    stream: true
-  })
-});
+      const res = await fetch('https://bhc-mira.azurewebsites.net/conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: source === 'company'
+                ? 'You are Mira for BHC. Use company knowledge.'
+                : 'You are Mira for BHC. Use general knowledge.'
+            },
+            { role: 'user', content: text }
+          ]
+        })
+      });
 
       if (!res.ok) {
-        aiBubble.textContent += `\n[Error ${res.status}] Check API key, endpoint, or permissions.`;
+        aiBubble.textContent += `\n[Error ${res.status}]`;
         return;
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-      let citations = [];
-
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunk = decoder.decode(value, { stream: true });
-        chunk.split('\n').forEach(line => {
-          if (!line.startsWith('data: ')) return;
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') return;
-          try {
-            const parsed = JSON.parse(data);
-            const delta = parsed.choices[0]?.delta;
-            if (delta?.content) {
-              aiBubble.textContent += delta.content;
-              chatLog.scrollTop = chatLog.scrollHeight;
-            }
-            if (parsed.choices[0]?.context?.citations) {
-              citations = parsed.choices[0].context.citations;
-            }
-          } catch (err) {
-            aiBubble.textContent += `\n[Parse error]`;
-            console.warn('Stream parse error:', err);
-          }
-        });
-      }
-
-      if (citations.length) {
-        const citationBlock = document.createElement('div');
-        citationBlock.className = 'citations';
-        citationBlock.innerHTML = citations.map((c, i) =>
-          `<div><sup>[${i + 1}]</sup> ${c.title || 'Untitled'}${c.url ? ` – <a href=\"${c.url}\" target=\"_blank\">${c.url}</a>` : ''}</div>`
-        ).join('');
-        aiBubble.appendChild(citationBlock);
-      }
-
-      currentSession.push({ role: 'user', content: text });
-      currentSession.push({ role: 'assistant', content: aiBubble.textContent.replace(/^Mira:\s*/, '') });
+      const data = await res.json();
+      aiBubble.textContent += data.choices
+        ? data.choices[0].message.content
+        : (data.answer || '[No response]');
     }
 
     window.onload = generatePrompts;
