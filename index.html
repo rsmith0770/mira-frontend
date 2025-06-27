@@ -137,15 +137,15 @@
       const input = document.getElementById('userInput');
       const text = input.value.trim();
       if (!text) return;
-
+    
       const source = document.getElementById('dataSource').value;
-
+    
       const userMsg = document.createElement('div');
       userMsg.className = 'message user-message';
       userMsg.textContent = 'You: ' + text;
       chatLog.appendChild(userMsg);
       input.value = '';
-
+    
       const aiBubble = document.createElement('div');
       aiBubble.className = 'message ai-message';
       aiBubble.textContent = 'Mira: ';
@@ -153,7 +153,7 @@
       chatLog.scrollTop = chatLog.scrollHeight;
       promptBox.style.display = 'none';
       chatLog.classList.add('visible');
-
+    
       const res = await fetch('https://bhc-mira.azurewebsites.net/conversation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,17 +169,25 @@
           ]
         })
       });
-
+    
       if (!res.ok) {
         aiBubble.textContent += `\n[Error ${res.status}]`;
         return;
       }
-
-      const data = await res.json();
-      aiBubble.textContent += data.choices
-        ? data.choices[0].message.content
-        : (data.answer || '[No response]');
+    
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+    
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunk = decoder.decode(value);
+        aiBubble.textContent += chunk;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
     }
+
 
     window.onload = generatePrompts;
   </script>
