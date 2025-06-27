@@ -133,88 +133,102 @@
       clearChat();
     }
     async function sendMessage() {
-      const input = document.getElementById('userInput');
-      const text = input.value.trim();
-      if (!text) return;
-      const source = document.getElementById('dataSource').value;
-      const chatSystem = source === 'company'
-        ? 'You are a professional and friendly AI assistant called Mira working for BHC. Use BHC documents from Azure Search whenever possible. Present answers clearly with structure. Include citations if available.'
-        : 'You are a helpful assistant. Use general knowledge only.';
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
 
-      const userMsg = document.createElement('div');
-      userMsg.className = 'message user-message';
-      userMsg.textContent = 'You: ' + text;
-      chatLog.appendChild(userMsg);
-      input.value = '';
+  const source = document.getElementById('dataSource').value;
+  const chatSystem = source === 'company'
+    ? 'You are Mira for BHC. Use Azure Search. Cite sources.'
+    : 'You are a helpful assistant. Use general knowledge only.';
 
-      const aiBubble = document.createElement('div');
-      aiBubble.className = 'message ai-message';
-      aiBubble.textContent = 'Mira: ';
-      chatLog.appendChild(aiBubble);
-      chatLog.scrollTop = chatLog.scrollHeight;
-      promptBox.style.display = 'none';
-      chatLog.classList.add('visible');
+  const chatLog = document.getElementById('chatLog');
+  const userMsg = document.createElement('div');
+  userMsg.className = 'message user-message';
+  userMsg.textContent = 'You: ' + text;
+  chatLog.appendChild(userMsg);
+  input.value = '';
 
-      const res = await fetch('https://uksouth.api.cognitive.microsoft.com/openai/deployments/gpt-4.1/extensions/chat/completions?api-version=2023-08-01-preview', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX'
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: chatSystem },
-            { role: 'user', content: text }
-          ],
-          dataSources: source === 'company' ? [
-            {
-              type: 'AzureCognitiveSearch',
-              parameters: {
-                endpoint: 'https://bhcazuresearch.search.windows.net',
-                indexName: 'bhcindex',
-                authentication: { type: 'apiKey', key: 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX' }
-              }
+  const aiBubble = document.createElement('div');
+  aiBubble.className = 'message ai-message';
+  aiBubble.textContent = 'Mira: ';
+  chatLog.appendChild(aiBubble);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  promptBox.style.display = 'none';
+  chatLog.classList.add('visible');
+
+  const res = await fetch('https://uksouth.api.cognitive.microsoft.com/openai/deployments/gpt-4.1/extensions/chat/completions?api-version=2023-08-01-preview', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX'
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: 'system', content: chatSystem },
+        { role: 'user', content: text }
+      ],
+      dataSources: source === 'company'
+        ? [{
+            type: 'AzureCognitiveSearch',
+            parameters: {
+              endpoint: 'https://bhcazuresearch.search.windows.net',
+              indexName: 'bhcindex',
+              authentication: { type: 'apiKey', key: 'j8j39nBw3dPS0UIF13bGZmk80BYUaU97ot1wfiNTnnAzSeCKdOHX' }
             }
-          ] : [],
-          temperature: 0.7,
-          top_p: 0.95,
-          stream: true
-        })
-      });
+          }]
+        : [],
+      temperature: 0.7,
+      top_p: 0.95,
+      stream: true
+    })
+  });
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-      let citations = [];
+  if (!res.ok) {
+    aiBubble.textContent += `\n[Error ${res.status}] Check API key, endpoint, or permissions.`;
+    return;
+  }
 
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunk = decoder.decode(value, { stream: true });
-        chunk.split('\n').forEach(line => {
-          if (!line.startsWith('data: ')) return;
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') return;
-          try {
-            const parsed = JSON.parse(data);
-            const delta = parsed.choices[0]?.delta;
-            if (delta?.content) {
-              aiBubble.textContent += delta.content;
-              chatLog.scrollTop = chatLog.scrollHeight;
-            }
-            if (parsed.choices[0]?.context?.citations) {
-              citations = parsed.choices[0].context.citations;
-            }
-          } catch (err) { console.warn('Stream error:', err); }
-        });
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let done = false;
+  let citations = [];
+
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    const chunk = decoder.decode(value, { stream: true });
+    chunk.split('\n').forEach(line => {
+      if (!line.startsWith('data: ')) return;
+      const data = line.slice(6).trim();
+      if (data === '[DONE]') return;
+      try {
+        const parsed = JSON.parse(data);
+        const delta = parsed.choices[0]?.delta;
+        if (delta?.content) {
+          aiBubble.textContent += delta.content;
+          chatLog.scrollTop = chatLog.scrollHeight;
+        }
+        if (parsed.choices[0]?.context?.citations) {
+          citations = parsed.choices[0].context.citations;
+        }
+      } catch (err) {
+        aiBubble.textContent += `\n[Parse error]`;
+        console.warn('Stream parse error:', err);
       }
+    });
+  }
 
-      if (citations.length) {
-        const citationBlock = document.createElement('div');
-        citationBlock.className = 'citations';
-        citationBlock.innerHTML = citations.map((c, i) => `<div><sup>[${i + 1}]</sup> ${c.title || 'Untitled'}${c.url ? ` – <a href="${c.url}" target="_blank">${c.url}</a>` : ''}</div>`).join('');
-        aiBubble.appendChild(citationBlock);
-      }
+  if (citations.length) {
+    const citationBlock = document.createElement('div');
+    citationBlock.className = 'citations';
+    citationBlock.innerHTML = citations.map((c, i) =>
+      `<div><sup>[${i + 1}]</sup> ${c.title || 'Untitled'}${c.url ? ` – <a href=\"${c.url}\" target=\"_blank\">${c.url}</a>` : ''}</div>`
+    ).join('');
+    aiBubble.appendChild(citationBlock);
+  }
+}
+
 
       currentSession.push({ role: 'user', content: text });
       currentSession.push({ role: 'assistant', content: aiBubble.textContent.replace(/^Mira:\s*/, '') });
