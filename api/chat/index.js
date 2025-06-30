@@ -1,4 +1,3 @@
-// api/chat/index.js
 const { SearchClient, AzureKeyCredential } = require("@azure/search-documents");
 const OpenAI = require("openai");
 
@@ -17,25 +16,35 @@ const openai = new OpenAI.OpenAI({
 });
 
 module.exports = async function (context, req) {
-  const { source, question } = req.body;
-  if (!question) return context.res = { status: 400, body: "Missing question." };
+  const { source, question } = req.body || {};
+  if (!question) {
+    context.res = { status: 400, body: "Missing question." };
+    return;
+  }
 
-  const topN = parseInt(process.env.AZURE_SEARCH_TOP_K) || 5;
-  const results = await searchClient.search(question, { top: topN }).byPage().next();
-  const docs = results.value.results.map(r => r.document.content).filter(Boolean).join("\n---\n");
+  const topN = parseInt(process.env.AZURE_SEARCH_TOP_K, 10) || 5;
+  const searchPages = await searchClient.search(question, { top: topN }).byPage().next();
+  const docs = searchPages.value.results
+    .map(r => r.document.content)
+    .filter(Boolean)
+    .join("\n---\n");
 
   const prompt = [
     { role: "system", content: process.env.AZURE_OPENAI_SYSTEM_MESSAGE },
-    { role: "user",  content: `Source: ${source}\nQuestion: ${question}\n\nDocs:\n${docs}` }
+    { role: "user", content: `Source: ${source}\nQuestion: ${question}\n\nDocs:\n${docs}` }
   ];
 
-  const resp = await openai.chat.completions.create({
+  const completion = await openai.chat.completions.create({
     messages: prompt,
-    maxTokens: parseInt(process.env.AZURE_OPENAI_MAX_TOKENS),
+    maxTokens: parseInt(process.env.AZURE_OPENAI_MAX_TOKENS, 10),
     temperature: parseFloat(process.env.AZURE_OPENAI_TEMPERATURE),
     topP: parseFloat(process.env.AZURE_OPENAI_TOP_P)
   });
 
-  const answer = resp.choices[0]?.message?.content || "";
-  context.res = { status: 200, body: { answer } };
+  const answer = completion.choices[0]?.message?.content || "";
+  context.res = {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+    body: { answer }
+  };
 };
