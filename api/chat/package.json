@@ -1,0 +1,8 @@
+{
+  "name": "chat-function",
+  "version": "1.0.0",
+  "dependencies": {
+    "@azure/search-documents": "^12.12.0",
+    "openai": "^4.3.1"
+  }
+}
