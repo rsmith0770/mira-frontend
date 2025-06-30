@@ -154,31 +154,24 @@
       promptBox.style.display = 'none';
       chatLog.classList.add('visible');
 
-      const res = await fetch('https://bhc-mira.azurewebsites.net/conversation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: source === 'company'
-                ? 'You are Mira for BHC. Use company knowledge.'
-                : 'You are Mira for BHC. Use general knowledge.'
-            },
-            { role: 'user', content: text }
-          ]
-        })
-      });
-
+      const res = await fetch('/api/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    source: document.getElementById('dataSource').value,
+    question: text
+  })
+})
+        
       if (!res.ok) {
         aiBubble.textContent += `\n[Error ${res.status}]`;
         return;
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-
+      const { answer } = await res.json();
+    aiBubble.textContent += answer;
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
