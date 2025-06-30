@@ -37,7 +37,7 @@
   <div class="top-bar">
     <div class="top-left"><h1>BHC Private GPT</h1></div>
     <div class="top-right">
-      <button onclick="toggleHistory()" title="Chat History"><i class="fas fa-history"></i></button>
+      <button id="historyBtn" title="Chat History"><i class="fas fa-history"></i></button>
       <select id="dataSource">
         <option value="company">Company</option>
         <option value="internet">Internet</option>
@@ -54,32 +54,43 @@
       <div class="chat-log" id="chatLog"></div>
       <div class="chat-input-wrapper">
         <div class="chat-actions">
-          <button onclick="newChat()" title="New Chat"><i class="fas fa-plus"></i></button>
-          <button onclick="clearChat()" title="Clear Chat"><i class="fas fa-broom"></i></button>
+          <button id="newChatBtn" title="New Chat"><i class="fas fa-plus"></i></button>
+          <button id="clearChatBtn" title="Clear Chat"><i class="fas fa-broom"></i></button>
         </div>
         <div class="chat-input-bar">
-          <input type="text" id="userInput" placeholder="Type a new question…" onkeydown="if(event.key==='Enter')sendMessage();" />
-          <button onclick="sendMessage()" title="Send"><i class="fas fa-paper-plane"></i></button>
+          <input type="text" id="userInput" placeholder="Type a new question…" />
+          <button id="sendBtn" title="Send"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </div>
     <div class="history-panel" id="historyPanel"></div>
   </div>
+
   <script>
-    const chatLog = document.getElementById('chatLog');
-    const promptBox = document.getElementById('promptBox');
-    const promptRow = document.getElementById('promptRow');
+    const chatLog      = document.getElementById('chatLog');
+    const promptBox    = document.getElementById('promptBox');
+    const promptRow    = document.getElementById('promptRow');
     const historyPanel = document.getElementById('historyPanel');
-    const promptList = [
-      "How do I submit a timesheet?",
-      "Summarise the latest ISO audit",
-      "Search for welding procedures",
-      "Where can I find toolbox talks?",
-      "List upcoming site visits"
-    ];
+    const inputEl      = document.getElementById('userInput');
+    const sendBtn      = document.getElementById('sendBtn');
+    const historyBtn   = document.getElementById('historyBtn');
+    const newChatBtn   = document.getElementById('newChatBtn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+
     let sessions = [], currentSession = [];
 
-    function toggleHistory() { historyPanel.classList.toggle('open'); }
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+    sendBtn.addEventListener('click', sendMessage);
+    historyBtn.addEventListener('click', toggleHistory);
+    newChatBtn.addEventListener('click', newChat);
+    clearChatBtn.addEventListener('click', clearChat);
+
+    function toggleHistory() {
+      historyPanel.classList.toggle('open');
+    }
+
     function renderHistory() {
       historyPanel.innerHTML = '';
       sessions.forEach((s, i) => {
@@ -90,6 +101,7 @@
         historyPanel.appendChild(item);
       });
     }
+
     function loadSession(i) {
       currentSession = [...sessions[i].messages];
       chatLog.innerHTML = '';
@@ -102,6 +114,32 @@
       promptBox.style.display = 'none';
       historyPanel.classList.remove('open');
     }
+
+    function clearChat() {
+      chatLog.innerHTML = '';
+      chatLog.classList.remove('visible');
+      promptBox.style.display = 'flex';
+      generatePrompts();
+      currentSession = [];
+    }
+
+    function newChat() {
+      if (currentSession.length) {
+        const title = currentSession[0].content.slice(0, 30) || `Chat ${sessions.length+1}`;
+        sessions.push({ title, messages: [...currentSession] });
+        renderHistory();
+      }
+      clearChat();
+    }
+
+    const promptList = [
+      "How do I submit a timesheet?",
+      "Summarise the latest ISO audit",
+      "Search for welding procedures",
+      "Where can I find toolbox talks?",
+      "List upcoming site visits"
+    ];
+
     function generatePrompts() {
       const used = new Set();
       promptRow.innerHTML = '';
@@ -112,30 +150,14 @@
           const btn = document.createElement('div');
           btn.className = 'prompt-btn';
           btn.innerText = text;
-          btn.onclick = () => { document.getElementById('userInput').value = text; sendMessage(); };
+          btn.onclick = () => { inputEl.value = text; sendMessage(); };
           promptRow.appendChild(btn);
         }
       }
     }
-    function clearChat() {
-      chatLog.innerHTML = '';
-      chatLog.classList.remove('visible');
-      promptBox.style.display = 'flex';
-      generatePrompts();
-      currentSession = [];
-    }
-    function newChat() {
-      if (currentSession.length) {
-        const title = currentSession[0].content.slice(0, 30) || `Chat ${sessions.length+1}`;
-        sessions.push({ title, messages: [...currentSession] });
-        renderHistory();
-      }
-      clearChat();
-    }
 
     async function sendMessage() {
-      const input = document.getElementById('userInput');
-      const text = input.value.trim();
+      const text = inputEl.value.trim();
       if (!text) return;
 
       const source = document.getElementById('dataSource').value;
@@ -144,7 +166,6 @@
       userMsg.className = 'message user-message';
       userMsg.textContent = 'You: ' + text;
       chatLog.appendChild(userMsg);
-      input.value = '';
 
       const aiBubble = document.createElement('div');
       aiBubble.className = 'message ai-message';
@@ -155,48 +176,28 @@
       chatLog.classList.add('visible');
 
       const res = await fetch('/api/chat', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    source: document.getElementById('dataSource').value,
-    question: text
-  })
-})
-        
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: source,
+          question: text
+        })
+      });
+
       if (!res.ok) {
         aiBubble.textContent += `\n[Error ${res.status}]`;
         return;
       }
 
       const { answer } = await res.json();
-    aiBubble.textContent += answer;
-    chatLog.scrollTop = chatLog.scrollHeight;
-  }
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6).trim();
-            if (data === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices?.[0]?.delta?.content;
-              if (delta) {
-                aiBubble.textContent += delta;
-                chatLog.scrollTop = chatLog.scrollHeight;
-              }
-            } catch (e) {
-              console.error('Parse error:', e, data);
-            }
-          }
-        }
-      }
+      aiBubble.textContent += answer;
+      chatLog.scrollTop = chatLog.scrollHeight;
+
+      currentSession.push({ role: 'user', content: text });
+      currentSession.push({ role: 'assistant', content: answer });
     }
 
-    window.onload = generatePrompts;
+    window.addEventListener('load', generatePrompts);
   </script>
 </body>
 </html>
