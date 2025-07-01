@@ -67,6 +67,7 @@
   </div>
 
   <script>
+  document.addEventListener('DOMContentLoaded', () => {
     const chatLog      = document.getElementById('chatLog');
     const promptBox    = document.getElementById('promptBox');
     const promptRow    = document.getElementById('promptRow');
@@ -79,6 +80,7 @@
 
     let sessions = [], currentSession = [];
 
+    // Event hooks
     inputEl.addEventListener('keydown', e => {
       if (e.key === 'Enter') sendMessage();
     });
@@ -87,74 +89,8 @@
     newChatBtn.addEventListener('click', newChat);
     clearChatBtn.addEventListener('click', clearChat);
 
-    function toggleHistory() {
-      historyPanel.classList.toggle('open');
-    }
-
-    function renderHistory() {
-      historyPanel.innerHTML = '';
-      sessions.forEach((s, i) => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        item.innerText = s.title;
-        item.onclick = () => loadSession(i);
-        historyPanel.appendChild(item);
-      });
-    }
-
-    function loadSession(i) {
-      currentSession = [...sessions[i].messages];
-      chatLog.innerHTML = '';
-      currentSession.forEach(msg => {
-        const cls = msg.role === 'user' ? 'user-message' : 'ai-message';
-        const label = msg.role === 'user' ? 'You:' : 'Mira:';
-        chatLog.innerHTML += `<div class="message ${cls}">${label} ${msg.content}</div>`;
-      });
-      chatLog.classList.add('visible');
-      promptBox.style.display = 'none';
-      historyPanel.classList.remove('open');
-    }
-
-    function clearChat() {
-      chatLog.innerHTML = '';
-      chatLog.classList.remove('visible');
-      promptBox.style.display = 'flex';
-      generatePrompts();
-      currentSession = [];
-    }
-
-    function newChat() {
-      if (currentSession.length) {
-        const title = currentSession[0].content.slice(0, 30) || `Chat ${sessions.length+1}`;
-        sessions.push({ title, messages: [...currentSession] });
-        renderHistory();
-      }
-      clearChat();
-    }
-
-    const promptList = [
-      "How do I submit a timesheet?",
-      "Summarise the latest ISO audit",
-      "Search for welding procedures",
-      "Where can I find toolbox talks?",
-      "List upcoming site visits"
-    ];
-
-    function generatePrompts() {
-      const used = new Set();
-      promptRow.innerHTML = '';
-      while (used.size < 3) {
-        const text = promptList[Math.floor(Math.random() * promptList.length)];
-        if (!used.has(text)) {
-          used.add(text);
-          const btn = document.createElement('div');
-          btn.className = 'prompt-btn';
-          btn.innerText = text;
-          btn.onclick = () => { inputEl.value = text; sendMessage(); };
-          promptRow.appendChild(btn);
-        }
-      }
-    }
+    // Helpers (toggleHistory, renderHistory, loadSession, clearChat, newChat, generatePrompts)
+    // … copy your existing implementations here …
 
     async function sendMessage() {
       const text = inputEl.value.trim();
@@ -162,11 +98,13 @@
 
       const source = document.getElementById('dataSource').value;
 
+      // Show user message
       const userMsg = document.createElement('div');
       userMsg.className = 'message user-message';
       userMsg.textContent = 'You: ' + text;
       chatLog.appendChild(userMsg);
 
+      // Prepare AI bubble
       const aiBubble = document.createElement('div');
       aiBubble.className = 'message ai-message';
       aiBubble.textContent = 'Mira: ';
@@ -175,6 +113,7 @@
       promptBox.style.display = 'none';
       chatLog.classList.add('visible');
 
+      // ← This await is valid because sendMessage() is async
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -189,15 +128,25 @@
         return;
       }
 
-      const { answer } = await res.json();
-      aiBubble.textContent += answer;
+      // Read JSON (includes error & stack if you’ve deployed the new catch-block)
+      const { answer, error, stack } = await res.json();
+      if (error) {
+        aiBubble.textContent += `\n[Error] ${error}`;
+        console.error(stack);
+      } else {
+        aiBubble.textContent += answer;
+      }
       chatLog.scrollTop = chatLog.scrollHeight;
 
+      // Save to current session
       currentSession.push({ role: 'user', content: text });
       currentSession.push({ role: 'assistant', content: answer });
     }
 
-    window.addEventListener('load', generatePrompts);
-  </script>
+    // Kick off prompt buttons
+    generatePrompts();
+  });
+</script>
+
 </body>
 </html>
